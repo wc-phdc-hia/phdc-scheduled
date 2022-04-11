@@ -1,0 +1,25 @@
+schedules:
+# cron calculator: https://crontab.guru/every-20-minutes
+- cron: "*/20 * * * *"
+  displayName: Check app-proxy (20 minute intervals)
+  branches:
+    include:
+    - main
+  always: true
+
+steps:
+- task: Bash@3
+  displayName: Check app-proxy (20 minute intervals)
+  inputs:
+    targetType: 'inline'
+    script: |
+      curled_url=$(curl -Ls -o /dev/null -w %{url_effective} http://spv.westerncape.gov.za)
+      domain=$(echo ${curled_url} | awk -F[/:] '{print $4}')
+      echo $domain
+      if [ "$domain" = "login.microsoftonline.com" ]; then
+          echo "Successfully followed redirect from http://spv.westerncape.gov.za to 'login.microsoftonline.com'."  
+          exit;
+      else
+          echo "Curl request to http://spv.westerncape.gov.za does not redirect to 'login.microsofonline.com'. App-proxy may be down."  
+          exit 1;
+      fi
